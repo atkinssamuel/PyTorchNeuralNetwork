@@ -5,34 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from data.sampler import ImbalancedDatasetSampler
 import scipy.signal
-from os import getcwd
-
-
-def get_accuracy(model, data):
-    correct = 0
-    total = 0
-    data_loader = torch.utils.data.DataLoader(data, batch_size=data.__len__(), sampler=ImbalancedDatasetSampler(data))
-    for inputs, labels in data_loader:
-        outputs = model(inputs.float()).detach().numpy()
-        outputs = np.round(outputs)
-        labels = labels.detach().numpy()
-        total += inputs.shape[0]
-        wrong = np.sum(np.abs(outputs - labels))
-        correct += inputs.shape[0] - wrong
-    return correct/total
-
-
-def get_loss(model, data):
-    data_loader = torch.utils.data.DataLoader(data, batch_size=data.__len__(), sampler=ImbalancedDatasetSampler(data))
-    criterion = nn.BCELoss()
-    for inputs, labels in iter(data_loader):
-        outputs = model(inputs.float())
-        loss = criterion(outputs, labels.float())
-    return float(loss) / data.__len__()
-
-
-def get_cwd(param):
-    pass
+from evaluator.helpers import get_accuracy, get_loss
 
 
 def train_model(model, name, training_data, validation_data=None, batch_size=1, epoch_count=1, shuffle=False,

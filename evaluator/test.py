@@ -1,5 +1,5 @@
 import torch
-from evaluator.train import get_accuracy
+from evaluator.helpers import get_accuracy
 
 
 def test_model(model, model_name, data):
