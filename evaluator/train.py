@@ -3,10 +3,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from architecture.model_architecture import FullyConnected
-from data.data_parser import get_dataset
 from data.sampler import ImbalancedDatasetSampler
 import scipy.signal
+from os import getcwd
 
 
 def get_accuracy(model, data):
@@ -32,7 +31,11 @@ def get_loss(model, data):
     return float(loss) / data.__len__()
 
 
-def train(model, name, training_data, validation_data=None, batch_size=1, epoch_count=1, shuffle=False,
+def get_cwd(param):
+    pass
+
+
+def train_model(model, name, training_data, validation_data=None, batch_size=1, epoch_count=1, shuffle=False,
           learning_rate=0.01, checkpoint_frequency=5, momentum=0.9):
     train_loader = torch.utils.data.DataLoader(training_data, batch_size=batch_size,
                                                sampler=ImbalancedDatasetSampler(training_data))
@@ -66,7 +69,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
             if current_iteration % checkpoint_frequency == 0:
                 print("Current Training Accuracy at Iteration {}: {}".format(current_iteration, train_acc[-1]))
 
-                model_path = '../models/' + str(name) + '_' + str(current_iteration) + '_' + str(batch_size) + \
+                model_path = 'models/' + str(name) + '_' + str(current_iteration) + '_' + str(batch_size) + \
                              '_' + str(learning_rate)
                 torch.save(model.state_dict(), model_path)
 
@@ -78,7 +81,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
     plt.plot(iterations, losses, label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Training Loss")
-    plt.savefig("../results/training_loss.png")
+    plt.savefig("results/training_loss.png")
     plt.close()
 
     plt.title("Training Accuracy")
@@ -89,7 +92,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
     plt.xlabel("Iterations")
     plt.ylabel("Training Accuracy")
     plt.legend(loc='best')
-    plt.savefig("../results/training_accuracy.png")
+    plt.savefig("results/training_accuracy.png")
     plt.close()
 
     if validation_data is not None:
@@ -98,7 +101,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
         plt.xlabel("Iterations")
         plt.ylabel("Validation Accuracy")
         plt.legend(loc='best')
-        plt.savefig("../results/validation_accuracy.png")
+        plt.savefig("results/validation_accuracy.png")
         plt.close()
 
         plt.title("Validation Loss")
@@ -106,14 +109,6 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
         plt.xlabel("Iterations")
         plt.ylabel("Validation Loss")
         plt.legend(loc='best')
-        plt.savefig("../results/validation_loss.png")
+        plt.savefig("results/validation_loss.png")
         plt.close()
     print("Final Training Accuracy: {}".format(train_acc[-1]))
-
-
-if __name__ == "__main__":
-    file_name = 'pima-indians-diabetes.data.csv'
-    dataset_object = get_dataset(file_name)
-    basicFC = FullyConnected()
-    train(basicFC, "basicFC", dataset_object, batch_size=256, epoch_count=2000, shuffle=True, learning_rate=0.001,
-          checkpoint_frequency=20)

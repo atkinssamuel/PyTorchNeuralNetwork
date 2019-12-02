@@ -66,8 +66,6 @@ class FullyConnected(torch.nn.Module):
 
         input_size = 8
         hidden_layer_size = 32
-        hidden_layer_2_size = 128
-        hidden_layer_3_size = 32
         output_size = 1
 
         self.fc1 = torch.nn.Linear(input_size, hidden_layer_size)
@@ -91,5 +89,21 @@ into an empty model class. Then, we evaluate the model by running it on
 the test set. The following code snippet illustrates the model parameter
 extraction process:
 ```python
+state = torch.load('../models/' + model_name)
+model.load_state_dict(state)
+```
+The test_model function executes the specified model on a desired dataset
+and prints the accuracy.
 
+### Main Block Example:
+An example of the main block contained in the main folder is as follows:
+```python
+if __name__ == "__main__":
+    file_name = 'pima-indians-diabetes.data.csv'
+    dataset_object = get_dataset(file_name)
+    basicFC = FullyConnected()
+    train_model(basicFC, "basicFC", dataset_object, batch_size=256, epoch_count=2000, shuffle=True, learning_rate=0.001,
+          checkpoint_frequency=20)
+    model_name = "basicFC_20_256_0.001"
+    test_model(basicFC, model_name, dataset_object)
 ```

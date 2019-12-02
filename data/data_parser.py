@@ -1,5 +1,5 @@
 import csv
-
+from os import getcwd
 import numpy as np
 
 
@@ -19,7 +19,7 @@ class Dataset():
 
 
 def get_dataset(file_name):
-    with open('../data/' + file_name) as csv_file:
+    with open(getcwd() + '/data/' + file_name) as csv_file:
         csv_reader = csv.reader(csv_file)
         init = 0
         for row in csv_reader:
