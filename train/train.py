@@ -38,6 +38,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
                                                sampler=ImbalancedDatasetSampler(training_data))
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # The scheduler reduces the learning rate when the loss begins to plateau:
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
     iterations, losses, train_acc, validation_acc, validation_loss = [], [], [], [], []
 
@@ -84,7 +85,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
     # Raw plot:
     # plt.plot(iterations, train_acc, label="Train")
     # savgol filter:
-    plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=5, window_length=11), label="Train")
+    plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=5, window_length=31), label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Training Accuracy")
     plt.legend(loc='best')
