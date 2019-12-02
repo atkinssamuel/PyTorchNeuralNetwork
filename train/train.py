@@ -1,16 +1,18 @@
-from data.data_parser import get_dataset
-from architecture.model_architecture import FullyConnected
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import matplotlib.pyplot as plt
+
+from architecture.model_architecture import FullyConnected
+from data.data_parser import get_dataset
+from data.sampler import ImbalancedDatasetSampler
 
 
 def get_accuracy(model, data):
     correct = 0
     total = 0
-    data_loader = torch.utils.data.DataLoader(data, batch_size=data.__len__(), shuffle=False)
+    data_loader = torch.utils.data.DataLoader(data, batch_size=data.__len__(), sampler=ImbalancedDatasetSampler(data))
     for inputs, labels in data_loader:
         outputs = model(inputs.float()).detach().numpy()
         outputs = np.round(outputs)
@@ -23,7 +25,7 @@ def get_accuracy(model, data):
 
 def get_loss(model, data):
     data_loader = torch.utils.data.DataLoader(data, batch_size=data.__len__(), shuffle=False)
-    criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.BCELoss()
     for inputs, labels in iter(data_loader):
         outputs = model(inputs.float())
         loss = criterion(outputs, labels)
@@ -32,8 +34,9 @@ def get_loss(model, data):
 
 def train(model, name, training_data, validation_data=None, batch_size=1, epoch_count=1, shuffle=False,
           learning_rate=0.01, checkpoint_frequency=5, momentum=0.9):
-    train_loader = torch.utils.data.DataLoader(training_data, batch_size=batch_size, shuffle=shuffle)
-    criterion = nn.BCEWithLogitsLoss()
+    train_loader = torch.utils.data.DataLoader(training_data, batch_size=batch_size,
+                                               sampler=ImbalancedDatasetSampler(training_data))
+    criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     iterations, losses, train_acc, validation_acc, validation_loss = [], [], [], [], []
 
@@ -44,7 +47,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
         for inputs, labels in iter(train_loader):
             optimizer.zero_grad()  # a clean up step for PyTorch
             outputs = model(inputs.float())  # forward pass
-            loss = criterion(outputs, labels)  # compute the total loss
+            loss = criterion(outputs, labels.float())  # compute the total loss
             loss.backward()  # backward pass (compute parameter updates)
             optimizer.step()  # make the updates for each parameter
 
@@ -61,9 +64,9 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
             if current_iteration % checkpoint_frequency == 0:
                 print("Current Training Accuracy at Iteration {}: {}".format(current_iteration, train_acc[-1]))
 
-                model_path = '../models/' + str(name) + '_' + str(current_iteration) + '_' + str(batch_size) + \
-                             '_' + str(learning_rate)
-                torch.save(model.state_dict(), model_path)
+                # model_path = '../models/' + str(name) + '_' + str(current_iteration) + '_' + str(batch_size) + \
+                #              '_' + str(learning_rate)
+                # torch.save(model.state_dict(), model_path)
 
             current_iteration += 1
 
@@ -72,7 +75,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
     plt.plot(iterations, losses, label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Training Loss")
-    plt.savefig("../results/training_loss.png")
+    # plt.savefig("../results/training_loss.png")
     plt.close()
 
     plt.title("Training Curve")
@@ -80,7 +83,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
     plt.xlabel("Iterations")
     plt.ylabel("Training Accuracy")
     plt.legend(loc='best')
-    plt.savefig("../results/training_accuracy.png")
+    # plt.savefig("../results/training_accuracy.png")
     plt.close()
     if validation_data is not None:
         plt.title("Validation Accuracy")
@@ -105,4 +108,4 @@ if __name__ == "__main__":
     file_name = 'pima-indians-diabetes.data.csv'
     dataset_object = get_dataset(file_name)
     basicFC = FullyConnected()
-    train(basicFC, "basicFC", dataset_object, batch_size=768, epoch_count=20, shuffle=True, learning_rate=0.1)
+    train(basicFC, "basicFC", dataset_object, batch_size=768, epoch_count=2000, shuffle=True, learning_rate=0.1)

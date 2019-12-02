@@ -1,6 +1,6 @@
 import csv
+
 import numpy as np
-import torch
 
 
 class Dataset():
@@ -32,8 +32,6 @@ def get_dataset(file_name):
             else:
                 inputs = np.vstack((inputs, input_element))
                 outputs = np.vstack((outputs, output_element))
-    inputs = torch.tensor(inputs)
-    outputs = torch.tensor(outputs)
     return Dataset(inputs, outputs)
 
 
