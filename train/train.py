@@ -3,10 +3,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
 from architecture.model_architecture import FullyConnected
 from data.data_parser import get_dataset
 from data.sampler import ImbalancedDatasetSampler
+import scipy.signal
 
 
 def get_accuracy(model, data):
@@ -24,11 +24,11 @@ def get_accuracy(model, data):
 
 
 def get_loss(model, data):
-    data_loader = torch.utils.data.DataLoader(data, batch_size=data.__len__(), shuffle=False)
+    data_loader = torch.utils.data.DataLoader(data, batch_size=data.__len__(), sampler=ImbalancedDatasetSampler(data))
     criterion = nn.BCELoss()
     for inputs, labels in iter(data_loader):
         outputs = model(inputs.float())
-        loss = criterion(outputs, labels)
+        loss = criterion(outputs, labels.float())
     return float(loss) / data.__len__()
 
 
@@ -38,6 +38,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
                                                sampler=ImbalancedDatasetSampler(training_data))
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
     iterations, losses, train_acc, validation_acc, validation_loss = [], [], [], [], []
 
     # training
@@ -64,27 +65,32 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
             if current_iteration % checkpoint_frequency == 0:
                 print("Current Training Accuracy at Iteration {}: {}".format(current_iteration, train_acc[-1]))
 
-                # model_path = '../models/' + str(name) + '_' + str(current_iteration) + '_' + str(batch_size) + \
-                #              '_' + str(learning_rate)
-                # torch.save(model.state_dict(), model_path)
+                model_path = '../models/' + str(name) + '_' + str(current_iteration) + '_' + str(batch_size) + \
+                             '_' + str(learning_rate)
+                torch.save(model.state_dict(), model_path)
 
             current_iteration += 1
+        # scheduler.step(get_loss(model, training_data))
 
     # plotting
-    plt.title("Training Curve")
+    plt.title("Training Loss")
     plt.plot(iterations, losses, label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Training Loss")
-    # plt.savefig("../results/training_loss.png")
+    plt.savefig("../results/training_loss.png")
     plt.close()
 
-    plt.title("Training Curve")
-    plt.plot(iterations, train_acc, label="Train")
+    plt.title("Training Accuracy")
+    # Raw plot:
+    # plt.plot(iterations, train_acc, label="Train")
+    # savgol filter:
+    plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=5, window_length=11), label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Training Accuracy")
     plt.legend(loc='best')
-    # plt.savefig("../results/training_accuracy.png")
+    plt.savefig("../results/training_accuracy.png")
     plt.close()
+
     if validation_data is not None:
         plt.title("Validation Accuracy")
         plt.plot(validation_acc, label="Validation")
@@ -108,4 +114,5 @@ if __name__ == "__main__":
     file_name = 'pima-indians-diabetes.data.csv'
     dataset_object = get_dataset(file_name)
     basicFC = FullyConnected()
-    train(basicFC, "basicFC", dataset_object, batch_size=768, epoch_count=2000, shuffle=True, learning_rate=0.1)
+    train(basicFC, "basicFC", dataset_object, batch_size=256, epoch_count=2000, shuffle=True, learning_rate=0.001,
+          checkpoint_frequency=20)
