@@ -36,3 +36,4 @@ def get_dataset(file_name):
     outputs = torch.tensor(outputs)
     return Dataset(inputs, outputs)
 
+

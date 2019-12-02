@@ -23,7 +23,7 @@ def get_accuracy(model, data):
 
 def get_loss(model, data):
     data_loader = torch.utils.data.DataLoader(data, batch_size=data.__len__(), shuffle=False)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCEWithLogitsLoss()
     for inputs, labels in iter(data_loader):
         outputs = model(inputs.float())
         loss = criterion(outputs, labels)
@@ -34,7 +34,7 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
           learning_rate=0.01, checkpoint_frequency=5, momentum=0.9):
     train_loader = torch.utils.data.DataLoader(training_data, batch_size=batch_size, shuffle=shuffle)
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     iterations, losses, train_acc, validation_acc, validation_loss = [], [], [], [], []
 
     # training
@@ -42,11 +42,11 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
 
     for epoch in range(epoch_count):
         for inputs, labels in iter(train_loader):
+            optimizer.zero_grad()  # a clean up step for PyTorch
             outputs = model(inputs.float())  # forward pass
             loss = criterion(outputs, labels)  # compute the total loss
             loss.backward()  # backward pass (compute parameter updates)
             optimizer.step()  # make the updates for each parameter
-            optimizer.zero_grad()  # a clean up step for PyTorch
 
             # save the current training information
             iterations.append(current_iteration)
@@ -71,14 +71,17 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
     plt.title("Training Curve")
     plt.plot(iterations, losses, label="Train")
     plt.xlabel("Iterations")
-    plt.ylabel("Loss")
+    plt.ylabel("Training Loss")
     plt.savefig("../results/training_loss.png")
+    plt.close()
+
     plt.title("Training Curve")
     plt.plot(iterations, train_acc, label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Training Accuracy")
     plt.legend(loc='best')
     plt.savefig("../results/training_accuracy.png")
+    plt.close()
     if validation_data is not None:
         plt.title("Validation Accuracy")
         plt.plot(validation_acc, label="Validation")
@@ -86,20 +89,20 @@ def train(model, name, training_data, validation_data=None, batch_size=1, epoch_
         plt.ylabel("Validation Accuracy")
         plt.legend(loc='best')
         plt.savefig("../results/validation_accuracy.png")
+        plt.close()
+
         plt.title("Validation Loss")
         plt.plot(validation_loss, label="Validation")
         plt.xlabel("Iterations")
         plt.ylabel("Validation Loss")
         plt.legend(loc='best')
         plt.savefig("../results/validation_loss.png")
-
+        plt.close()
     print("Final Training Accuracy: {}".format(train_acc[-1]))
 
-
-##
 
 if __name__ == "__main__":
     file_name = 'pima-indians-diabetes.data.csv'
     dataset_object = get_dataset(file_name)
     basicFC = FullyConnected()
-    train(basicFC, "basicFC", dataset_object, batch_size=128, epoch_count=20, shuffle=True, learning_rate=0.01)
+    train(basicFC, "basicFC", dataset_object, batch_size=768, epoch_count=20, shuffle=True, learning_rate=0.1)
