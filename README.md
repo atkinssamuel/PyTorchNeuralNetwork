@@ -1,5 +1,5 @@
-# Basic Neural Network
-This repository serves as a basis for future learning projects. Instead 
+# PyTorch Neural Network
+This repository serves as a basis for future PyTorch learning projects. Instead 
 of building a neural network from scratch, future projects will rely 
 on this repository for a starting point. This repository uses
 the small pima indians diabetes dataset. The architecture of the neural
